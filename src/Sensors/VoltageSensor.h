@@ -9,13 +9,14 @@
 
 enum VoltageSensorType {VOLTSENS_20K, VOLTSENS_50K, VOLTSENS_100K, VOLTSENS_200K};
 
-class VoltageSensor {
+class VoltageSensor{
 public:
     VoltageSensor(VoltageSensorType sensorType, uint8_t _pin); // constructor
+    void ReadValue();
     double GetValue() const;
 private:
     uint8_t pin;
-    double R1,R2;
+    double R1,R2, Value;
 };
 
 

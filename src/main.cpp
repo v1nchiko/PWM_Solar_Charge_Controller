@@ -1,8 +1,8 @@
 // Arduino pins Connections----------------------------------------------------------------------------
 
-// A0 - Voltage divider to measure solar panel voltage
-// A1 - Voltage divider to measure battery voltage
-// A2 - ACS712 to monitor solar current
+// A0 - ACS712 to monitor solar current
+// A1 - Voltage divider to measure solar panel
+// A2 - Voltage divider to measure battery voltage
 // A3 - Not used
 // A4 - LCD SDA
 // A5 - LCD SCL
@@ -43,9 +43,9 @@ byte not_charge[8]= {0b00000,0b10001,0b01010,0b00100,0b01010,0b10001,0b00000,0b0
 
 // Definitions :
 
-#define SOLAR_VOLT_SENS 0        // defining the analog pin A0 to read solar panel Voltage
-#define BATTERY_VOLT_SENS 1      // defining the analog pin A1 to read battery voltage
-#define SOLAR_CURRENT_SENS 2     // defining the Analog pin A2 to measure load current
+#define SOLAR_VOLT_SENS 1        // defining the analog pin A0 to read solar panel Voltage
+#define BATTERY_VOLT_SENS 2      // defining the analog pin A1 to read battery voltage
+#define SOLAR_CURRENT_SENS 0     // defining the Analog pin A2 to measure load current
 #define PWM_PIN 3                // defining digital pin D3 to drive the main MOSFET
 
 VoltageSensor InputVoltageSensor(VOLTSENS_100K, SOLAR_VOLT_SENS);
@@ -53,8 +53,17 @@ VoltageSensor BatteryVoltageSensor(VOLTSENS_100K, BATTERY_VOLT_SENS);
 ACS712 CurrentSensor(ACS712_30A, SOLAR_CURRENT_SENS);
 LiquidCrystal_I2C lcd(0x27, 16,2);
 
+double Current_Value;
+double Input_Watts;
+
+bool To_Charge;
+bool ChargeB;
+
 void SerialPrint();
 void LCD_Print();
+
+void ReadValues();
+void Charge();
 
 void setup()
 {
@@ -64,17 +73,21 @@ void setup()
     lcd.init();
     lcd.backlight();
 
+    lcd.setCursor(0,0);
+    lcd.println("BOOTING...");
+
     lcd.createChar(1, solar);
     lcd.createChar(2, battery);
     lcd.createChar(3, energy);
     lcd.createChar(4, charge);
     lcd.createChar(5, not_charge);
 
-    lcd.setCursor(0,0);
-    lcd.println("BOOTING...");
+    delay(500);
 
     Serial.println("OK!");
     Serial.println();
+
+    lcd.clear();
 
     lcd.setCursor(0,0);
     lcd.println("OK!");
@@ -84,5 +97,77 @@ void setup()
 
 void loop()
 {
-// write your code here
+    ReadValues();
+    Charge();
+    SerialPrint();
+    LCD_Print();
+
+    delay(1000);
+}
+
+void SerialPrint()
+{
+
+}
+
+void LCD_Print()
+{
+    lcd.clear();
+    // Display Solar Panel Parameters
+    lcd.setCursor(0, 0);
+    lcd.write(1);
+    lcd.setCursor(2, 0);
+    lcd.print(InputVoltageSensor.GetValue(),1);
+    lcd.print("V");
+    lcd.setCursor(8, 0);
+    lcd.print(Current_Value,1);
+    lcd.print("A");
+
+    // Display Battery Parameters
+    lcd.setCursor(0,1);
+    lcd.write(2);
+    lcd.setCursor(2, 1);
+    lcd.print(BatteryVoltageSensor.GetValue(),1);
+    lcd.print("V");
+    lcd.setCursor(9,1);
+    lcd.print(Input_Watts,1);
+    lcd.print("W");
+    lcd.setCursor(15, 1);
+    lcd.write(4);
+}
+
+void ReadValues()
+{
+    InputVoltageSensor.ReadValue();
+    BatteryVoltageSensor.ReadValue();
+
+    Current_Value = CurrentSensor.getCurrentDC();
+
+    if(Current_Value <= 0.15)
+    {
+        Current_Value = 0;
+    }
+
+    Input_Watts = Current_Value * BatteryVoltageSensor.GetValue();
+
+    if (BatteryVoltageSensor.GetValue() >= 14.4)
+    {
+        To_Charge = false;
+    }
+    else if (BatteryVoltageSensor.GetValue() <= 13.2)
+    {
+        To_Charge = true;
+    }
+}
+
+void Charge()
+{
+    if(To_Charge)
+    {
+        analogWrite(PWM_PIN, 255);
+    }
+    else
+    {
+        analogWrite(PWM_PIN, 0);
+    }
 }

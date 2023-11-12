@@ -5,8 +5,10 @@
 #include <Arduino.h>
 #include "VoltageSensor.h"
 
-VoltageSensor::VoltageSensor(VoltageSensorType sensorType, uint8_t _pin) {
+VoltageSensor::VoltageSensor(VoltageSensorType sensorType, uint8_t _pin)
+{
     pin = _pin;
+    Value = 0;
 
     // Different models of the sensor have their sensitivity:
     switch (sensorType) {
@@ -29,8 +31,13 @@ VoltageSensor::VoltageSensor(VoltageSensorType sensorType, uint8_t _pin) {
     }
 }
 
-double VoltageSensor::GetValue() const {
+void VoltageSensor::ReadValue()
+{
     int analogValue = analogRead(pin); // Get value from analog pin
     double temp = (analogValue * 5.0) / 1024.0; // Converting voltage value
-    return temp / (R2/(R1 + R2));
+    Value = temp / (R2/(R1 + R2));
+}
+
+double VoltageSensor::GetValue() const {
+    return Value;
 }
