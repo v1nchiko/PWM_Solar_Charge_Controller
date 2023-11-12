@@ -48,10 +48,10 @@ byte not_charge[8]= {0b00000,0b10001,0b01010,0b00100,0b01010,0b10001,0b00000,0b0
 #define SOLAR_CURRENT_SENS 0     // defining the Analog pin A2 to measure load current
 #define PWM_PIN 3                // defining digital pin D3 to drive the main MOSFET
 
-VoltageSensor InputVoltageSensor(VOLTSENS_100K, SOLAR_VOLT_SENS);
-VoltageSensor BatteryVoltageSensor(VOLTSENS_100K, BATTERY_VOLT_SENS);
-ACS712 CurrentSensor(ACS712_30A, SOLAR_CURRENT_SENS);
-LiquidCrystal_I2C lcd(0x27, 16,2);
+VoltageSensor Input_Voltage_Sensor(VOLTSENS_100K, SOLAR_VOLT_SENS);
+VoltageSensor Battery_Voltage_Sensor(VOLTSENS_100K, BATTERY_VOLT_SENS);
+ACS712 Current_Sensor(ACS712_30A, SOLAR_CURRENT_SENS);
+LiquidCrystal_I2C LCD(0x27, 16, 2);
 
 double Current_Value;
 double Input_Watts;
@@ -70,27 +70,34 @@ void setup()
     Serial.begin(9600);
     Serial.println("BOOTING...");
 
-    lcd.init();
-    lcd.backlight();
+    LCD.init();
+    LCD.backlight();
 
-    lcd.setCursor(0,0);
-    lcd.println("BOOTING...");
+    LCD.setCursor(0, 0);
+    LCD.println("BOOTING...");
 
-    lcd.createChar(1, solar);
-    lcd.createChar(2, battery);
-    lcd.createChar(3, energy);
-    lcd.createChar(4, charge);
-    lcd.createChar(5, not_charge);
+    LCD.createChar(1, solar);
+    LCD.createChar(2, battery);
+    LCD.createChar(3, energy);
+    LCD.createChar(4, charge);
+    LCD.createChar(5, not_charge);
+
+    pinMode(SOLAR_VOLT_SENS, INPUT);
+    pinMode(BATTERY_VOLT_SENS, INPUT);
+    pinMode(SOLAR_CURRENT_SENS, INPUT);
+    pinMode(PWM_PIN, OUTPUT);
+
+    Current_Sensor.calibrate();
 
     delay(500);
 
     Serial.println("OK!");
     Serial.println();
 
-    lcd.clear();
+    LCD.clear();
 
-    lcd.setCursor(0,0);
-    lcd.println("OK!");
+    LCD.setCursor(0, 0);
+    LCD.println("OK!");
 
     delay(1000);
 }
@@ -112,49 +119,49 @@ void SerialPrint()
 
 void LCD_Print()
 {
-    lcd.clear();
+    LCD.clear();
     // Display Solar Panel Parameters
-    lcd.setCursor(0, 0);
-    lcd.write(1);
-    lcd.setCursor(2, 0);
-    lcd.print(InputVoltageSensor.GetValue(),1);
-    lcd.print("V");
-    lcd.setCursor(8, 0);
-    lcd.print(Current_Value,1);
-    lcd.print("A");
+    LCD.setCursor(0, 0);
+    LCD.write(1);
+    LCD.setCursor(2, 0);
+    LCD.print(Input_Voltage_Sensor.GetValue(), 1);
+    LCD.print("V");
+    LCD.setCursor(8, 0);
+    LCD.print(Current_Value, 1);
+    LCD.print("A");
 
     // Display Battery Parameters
-    lcd.setCursor(0,1);
-    lcd.write(2);
-    lcd.setCursor(2, 1);
-    lcd.print(BatteryVoltageSensor.GetValue(),1);
-    lcd.print("V");
-    lcd.setCursor(9,1);
-    lcd.print(Input_Watts,1);
-    lcd.print("W");
-    lcd.setCursor(15, 1);
-    lcd.write(4);
+    LCD.setCursor(0, 1);
+    LCD.write(2);
+    LCD.setCursor(2, 1);
+    LCD.print(Battery_Voltage_Sensor.GetValue(), 1);
+    LCD.print("V");
+    LCD.setCursor(9, 1);
+    LCD.print(Input_Watts, 1);
+    LCD.print("W");
+    LCD.setCursor(15, 1);
+    LCD.write(4);
 }
 
 void ReadValues()
 {
-    InputVoltageSensor.ReadValue();
-    BatteryVoltageSensor.ReadValue();
+    Input_Voltage_Sensor.ReadValue();
+    Battery_Voltage_Sensor.ReadValue();
 
-    Current_Value = CurrentSensor.getCurrentDC();
+    Current_Value = Current_Sensor.getCurrentDC();
 
     if(Current_Value <= 0.15)
     {
         Current_Value = 0;
     }
 
-    Input_Watts = Current_Value * BatteryVoltageSensor.GetValue();
+    Input_Watts = Current_Value * Battery_Voltage_Sensor.GetValue();
 
-    if (BatteryVoltageSensor.GetValue() >= 14.4)
+    if (Battery_Voltage_Sensor.GetValue() >= 14.4)
     {
         To_Charge = false;
     }
-    else if (BatteryVoltageSensor.GetValue() <= 13.2)
+    else if (Battery_Voltage_Sensor.GetValue() <= 13.2)
     {
         To_Charge = true;
     }
