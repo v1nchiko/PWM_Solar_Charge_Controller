@@ -5,8 +5,7 @@
 #include <Arduino.h>
 #include "VoltageSensor.h"
 
-VoltageSensor::VoltageSensor(VoltageSensorType sensorType, uint8_t _pin)
-{
+VoltageSensor::VoltageSensor(VoltageSensorType sensorType, uint8_t _pin){
     pin = _pin;
     Value = 0;
 
@@ -31,8 +30,7 @@ VoltageSensor::VoltageSensor(VoltageSensorType sensorType, uint8_t _pin)
     }
 }
 
-void VoltageSensor::ReadValue()
-{
+void VoltageSensor::ReadValue(){
     int analogValue = analogRead(pin); // Get value from analog pin
     double temp = (analogValue * 5.0) / 1024.0; // Converting voltage value
     Value = temp / (R2/(R1 + R2));
@@ -40,4 +38,8 @@ void VoltageSensor::ReadValue()
 
 double VoltageSensor::GetValue() const {
     return Value;
+}
+
+void VoltageSensor::SetValue(double value) {
+    Value = value;
 }

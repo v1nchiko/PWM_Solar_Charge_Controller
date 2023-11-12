@@ -54,10 +54,9 @@ ACS712 Current_Sensor(ACS712_30A, SOLAR_CURRENT_SENS);
 LiquidCrystal_I2C LCD(0x27, 16, 2);
 
 double Current_Value;
-double Input_Watts;
+double Watts;
 
 bool To_Charge;
-bool ChargeB;
 
 void SerialPrint();
 void LCD_Print();
@@ -114,7 +113,22 @@ void loop()
 
 void SerialPrint()
 {
-
+    Serial.println();
+    Serial.print("Solar voltage - ");
+    Serial.print(Input_Voltage_Sensor.GetValue());
+    Serial.println();
+    Serial.print("Battery voltage - ");
+    Serial.print(Battery_Voltage_Sensor.GetValue());
+    Serial.println();
+    Serial.print("Current - ");
+    Serial.print(Current_Value);
+    Serial.println();
+    Serial.print("Watts - ");
+    Serial.print(Watts);
+    Serial.println();
+    Serial.print("Charge state - ");
+    Serial.print(Input_Voltage_Sensor.GetValue());
+    Serial.println();
 }
 
 void LCD_Print()
@@ -137,25 +151,51 @@ void LCD_Print()
     LCD.print(Battery_Voltage_Sensor.GetValue(), 1);
     LCD.print("V");
     LCD.setCursor(9, 1);
-    LCD.print(Input_Watts, 1);
+    LCD.print(Watts, 1);
     LCD.print("W");
     LCD.setCursor(15, 1);
-    LCD.write(4);
+    if(To_Charge)
+    {
+        LCD.write(4);
+    }
+    else
+    {
+        LCD.write(5);
+    }
 }
 
 void ReadValues()
 {
-    Input_Voltage_Sensor.ReadValue();
+    if(To_Charge)
+    {
+        analogWrite(PWM_PIN, 0); //
+
+        Input_Voltage_Sensor.ReadValue();
+
+        delay(100); //
+        analogWrite(PWM_PIN, 255); //
+    }
+
     Battery_Voltage_Sensor.ReadValue();
 
     Current_Value = Current_Sensor.getCurrentDC();
 
-    if(Current_Value <= 0.15)
+    if(Current_Value < 0.16)
     {
         Current_Value = 0;
     }
 
-    Input_Watts = Current_Value * Battery_Voltage_Sensor.GetValue();
+    if(Input_Voltage_Sensor.GetValue() < 0.16)
+    {
+        Input_Voltage_Sensor.SetValue(0);
+    }
+
+    if(Battery_Voltage_Sensor.GetValue() < 0.16)
+    {
+        Battery_Voltage_Sensor.SetValue(0);
+    }
+
+    Watts = Current_Value * Battery_Voltage_Sensor.GetValue();
 
     if (Battery_Voltage_Sensor.GetValue() >= 14.4)
     {

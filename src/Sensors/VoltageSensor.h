@@ -14,6 +14,7 @@ public:
     VoltageSensor(VoltageSensorType sensorType, uint8_t _pin); // constructor
     void ReadValue();
     double GetValue() const;
+    void SetValue(double value);
 private:
     uint8_t pin;
     double R1,R2, Value;
